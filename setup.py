@@ -10,13 +10,13 @@ with open(os.path.join(root, 'README.rst')) as f:
     README = f.read()
 
 setup(
-    name='django-erors',
+    name='django-eros',
     version=version,
-    description='Messaging system for your users',
+    description='Standalone Django application to like any content types you want',
     long_description=README,
     author='Florent Messa',
     author_email='florent.messa@gmail.com',
-    url='http://github.com/thoas/django-erors',
+    url='http://github.com/thoas/django-eros',
     packages=find_packages(),
     zip_safe=False,
     include_package_data=True,

@@ -5,17 +5,33 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes import generic
 
-import caching.base
+from django.core.cache import cache
+
+from eros.settings import EROS_CACHE_PREFIX
 
 
-class Resource(caching.base.CachingMixin, models.Model):
+def make_key_from_obj(obj):
+    return make_key('%s.%s' % (obj._meta.app_label, obj._meta.module_name), obj.pk)
+
+
+def make_key(ctype, object_pk):
+    return EROS_CACHE_PREFIX + '%s:%s' % (ctype,
+                                          object_pk)
+
+
+class ResourceManager(models.Manager):
+    def get_cache_count(self, ctype, object_pk):
+        return cache.get(make_key(ctype, object_pk), 0) or 0
+
+
+class Resource(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveSmallIntegerField(_('object id'), db_index=True)
     like_count = models.PositiveIntegerField(default=0, db_index=True)
     content_object = generic.GenericForeignKey(ct_field='content_type', fk_field='object_id')
 
-    objects = caching.base.CachingManager()
+    objects = ResourceManager()
 
     class Meta:
         unique_together = (('content_type', 'object_id'))

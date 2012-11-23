@@ -1,3 +1,5 @@
+import os
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -28,4 +30,5 @@ TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 ROOT_URLCONF = 'eros.urls'
 
 TEMPLATE_DIRS = (
+    os.path.join(os.path.dirname(__file__), 'templates')
 )

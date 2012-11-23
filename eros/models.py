@@ -5,13 +5,17 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes import generic
 
+import caching.base
 
-class Resource(models.Model):
+
+class Resource(caching.base.CachingMixin, models.Model):
     created = models.DateTimeField(auto_now_add=True)
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveSmallIntegerField(_('object id'), db_index=True)
     like_count = models.PositiveIntegerField(default=0, db_index=True)
     content_object = generic.GenericForeignKey(ct_field='content_type', fk_field='object_id')
+
+    objects = caching.base.CachingManager()
 
     class Meta:
         unique_together = (('content_type', 'object_id'))
@@ -70,6 +74,11 @@ def like(obj, user_ip, user=None):
     resource, created = Resource.objects.get_or_create(content_type=content_type,
                                                        object_id=obj.pk)
 
-    return Like.objects.create(resource=resource,
-                               ip_address=user_ip,
-                               user=user)
+    like, created = Like.objects.get_or_create(resource=resource,
+                                               ip_address=user_ip,
+                                               user=user)
+
+    if created:
+        return like
+
+    return created

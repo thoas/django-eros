@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.sites',
     'eros',
+    'eros.tests',
     'django_nose',
 ]
 

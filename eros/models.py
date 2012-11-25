@@ -40,8 +40,16 @@ class Resource(models.Model):
     def compute(self, commit=True):
         self.like_count = self.likes.count()
 
+        self.sync_cache()
+
         if commit:
             self.save()
+
+    def sync_cache(self, like_count=None):
+        if not like_count:
+            like_count = self.like_count
+
+        cache.set(make_key_from_obj(self), like_count)
 
 
 class LikeManager(models.Manager):

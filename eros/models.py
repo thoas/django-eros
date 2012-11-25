@@ -27,9 +27,10 @@ class ResourceManager(models.Manager):
 class Resource(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     content_type = models.ForeignKey(ContentType)
-    object_id = models.PositiveSmallIntegerField(_('object id'), db_index=True)
+    object_id = models.PositiveIntegerField(_('object id'), db_index=True)
     like_count = models.PositiveIntegerField(default=0, db_index=True)
     content_object = generic.GenericForeignKey(ct_field='content_type', fk_field='object_id')
+    user = models.ForeignKey(User, null=True, blank=True)
 
     objects = ResourceManager()
 
@@ -76,7 +77,9 @@ class LikeManager(models.Manager):
 class Like(models.Model):
     user = models.ForeignKey(User, null=True, blank=True)
     ip_address = models.IPAddressField(_('IP Address'),
-                                       help_text=_('The IP address'))
+                                       help_text=_('The IP address'),
+                                       null=True,
+                                       blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
     resource = models.ForeignKey(Resource, related_name='likes')

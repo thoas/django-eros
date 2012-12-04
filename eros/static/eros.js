@@ -92,7 +92,7 @@
                 var elem = $(this);
 
                 $.getJSON(elem.attr('href'), function(data) {
-                  elem.find('.eros-counter-label').html(data.count);
+                  parent.find('.eros-counter-label').html(data.count);
                   elem.toggleClass('liked');
                 });
               });

@@ -9,21 +9,24 @@ from django.core.cache import cache
 
 from eros.settings import EROS_CACHE_PREFIX
 
-_registry = {}
+
+def make_key_from_obj(obj, suffix=None):
+    return make_key('.'.join(ContentType.objects.get_for_model(obj).natural_key()), obj.pk, suffix or '')
 
 
-def make_key_from_obj(obj):
-    return make_key('.'.join(ContentType.objects.get_for_model(obj).natural_key()), obj.pk)
-
-
-def make_key(ctype, object_pk):
-    return EROS_CACHE_PREFIX + '%s:%s' % (ctype,
-                                          object_pk)
+def make_key(ctype, object_pk, suffix=None):
+    return EROS_CACHE_PREFIX + '%s:%s:%s' % (ctype,
+                                             object_pk,
+                                             suffix or '')
 
 
 class ResourceManager(models.Manager):
-    def get_cache_count(self, ctype, object_pk):
-        return cache.get(make_key(ctype, object_pk), 0) or 0
+    pass
+
+
+class ResourceCacheManager(models.Manager):
+    def get_count(self, ctype, object_pk):
+        return cache.get(make_key(ctype, object_pk, 'count'), 0) or 0
 
 
 class Resource(models.Model):
@@ -35,6 +38,7 @@ class Resource(models.Model):
     user = models.ForeignKey(User, null=True, blank=True)
 
     objects = ResourceManager()
+    cache = ResourceCacheManager()
 
     class Meta:
         unique_together = (('content_type', 'object_id'))
@@ -47,13 +51,29 @@ class Resource(models.Model):
         if commit:
             self.save()
 
-    def sync_cache(self, like_count=None):
-        if not like_count:
-            like_count = self.like_count
+    def sync_count(self):
+        ctype = '.'.join(self.content_type.natural_key())
 
-        key = make_key('.'.join(self.content_type.natural_key()), self.object_id)
+        count_key = make_key(ctype, self.object_id, 'count')
 
-        cache.set(key, like_count)
+        cache.set(count_key, self.like_count)
+
+        return self.like_count
+
+    def sync_users(self):
+        ctype = '.'.join(self.content_type.natural_key())
+
+        users_key = make_key(ctype, self.object_id, 'users')
+
+        user_keys = '|'.join([str(like[0]) for like in self.likes.values_list('user')])
+
+        cache.set(users_key, user_keys)
+
+        return user_keys
+
+    def sync_cache(self):
+        self.sync_count()
+        self.sync_users()
 
 
 class LikeManager(models.Manager):
@@ -102,8 +122,7 @@ class Like(models.Model):
 def like(obj, user_ip, user):
     content_type = ContentType.objects.get_for_model(obj)
 
-    resource, created = Resource.objects.get_or_create(content_type=content_type,
-                                                       object_id=obj.pk)
+    resource, created = Resource.objects.get_or_create(content_type=content_type, object_id=obj.pk)
 
     like, created = Like.objects.get_or_create(resource=resource,
                                                ip_address=user_ip,
@@ -113,7 +132,3 @@ def like(obj, user_ip, user):
         return like
 
     return created
-
-
-def register(model_class, params=None):
-    _registry[model_class] = params or {}

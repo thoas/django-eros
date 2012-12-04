@@ -2,10 +2,8 @@ from django.db import models
 from django.views import generic
 from django.core.exceptions import SuspiciousOperation
 from django.utils.html import escape
-from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import Http404
-from django.shortcuts import redirect
 
 from eros.models import like, Resource
 from eros.util import get_ip
@@ -51,7 +49,7 @@ class LikeView(BaseLikeView):
         self.model = self.get_model(ctype)
 
         return {
-            'count': Resource.objects.get_cache_count(ctype, object_pk),
+            'count': Resource.cache.get_count(ctype, object_pk),
             'ctype': ctype,
             'object_pk': object_pk
         }
@@ -59,14 +57,16 @@ class LikeView(BaseLikeView):
     def get(self, request, *args, **kwargs):
         self.request = request
 
-        context = self.get_context_data(**kwargs)
-
         submit = self.request.GET.get('submit', False)
+
+        context = self.get_context_data(**kwargs)
 
         if submit and request.user.is_authenticated():
             like(self.get_object(context['object_pk']),
                  user_ip=get_ip(request),
                  user=request.user)
+
+            context = self.get_context_data(**kwargs)
 
         return JSONResponse(context, callback=request.GET.get('callback', ''))
 

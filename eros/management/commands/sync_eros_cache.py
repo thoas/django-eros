@@ -11,7 +11,7 @@ class Command(BaseCommand):
         make_option('--length',
                     action='store_true',
                     dest='length',
-                    default=50000,
+                    default=10000,
                     help='Chunk length'),
     )
 

@@ -9,9 +9,11 @@ from django.core.cache import cache
 
 from eros.settings import EROS_CACHE_PREFIX
 
+_registry = {}
+
 
 def make_key_from_obj(obj):
-    return make_key('%s.%s' % (obj._meta.app_label, obj._meta.module_name), obj.pk)
+    return make_key('.'.join(ContentType.objects.get_for_model(obj).natural_key()), obj.pk)
 
 
 def make_key(ctype, object_pk):
@@ -49,7 +51,9 @@ class Resource(models.Model):
         if not like_count:
             like_count = self.like_count
 
-        cache.set(make_key_from_obj(self), like_count)
+        key = make_key('.'.join(self.content_type.natural_key()), self.object_id)
+
+        cache.set(key, like_count)
 
 
 class LikeManager(models.Manager):
@@ -83,7 +87,7 @@ class LikeManager(models.Manager):
 
 
 class Like(models.Model):
-    user = models.ForeignKey(User, null=True, blank=True)
+    user = models.ForeignKey(User)
     ip_address = models.IPAddressField(_('IP Address'),
                                        help_text=_('The IP address'),
                                        null=True,
@@ -95,7 +99,7 @@ class Like(models.Model):
     objects = LikeManager()
 
 
-def like(obj, user_ip, user=None):
+def like(obj, user_ip, user):
     content_type = ContentType.objects.get_for_model(obj)
 
     resource, created = Resource.objects.get_or_create(content_type=content_type,
@@ -109,3 +113,7 @@ def like(obj, user_ip, user=None):
         return like
 
     return created
+
+
+def register(model_class, params=None):
+    _registry[model_class] = params or {}

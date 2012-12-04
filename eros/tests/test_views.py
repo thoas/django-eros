@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import User
 
 from eros.models import Like
 from eros.tests.models import Poll
@@ -14,24 +15,25 @@ class ViewTests(TestCase):
 
         self.content_type = ContentType.objects.get_for_model(Poll)
 
+        self.user = User.objects.create_user('newbie', 'newbie@localhost', '$ecret')
+
     def test_like_view(self):
-        response = self.client.get(reverse('eros_like', kwargs={
-            'content_type': '%s.%s' % (Poll._meta.app_label, self.content_type),
-            'object_pk': self.poll.pk
-        }))
+        querystring = '?ctype=%s&object_pk=%s' % ('%s.%s' % (Poll._meta.app_label, self.content_type), self.poll.pk)
+
+        response = self.client.get(reverse('eros_like') + querystring)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response,
-                                'eros/like.html')
 
     def test_like_complete(self):
-        like_url = reverse('eros_like', kwargs={
-            'content_type': '%s.%s' % (Poll._meta.app_label, self.content_type),
-            'object_pk': self.poll.pk
-        })
 
-        response = self.client.post(like_url)
+        self.client.login(username='newbie', password='$ecret')
 
-        self.assertRedirects(response, like_url)
+        like_url = reverse('eros_like', )
+
+        querystring = '?ctype=%s&object_pk=%s&submit=1' % ('%s.%s' % (Poll._meta.app_label, self.content_type), self.poll.pk)
+
+        response = self.client.get(like_url + querystring)
+
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(Like.objects.get_count(obj=self.poll), 1)

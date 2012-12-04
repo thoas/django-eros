@@ -23,7 +23,7 @@ class Command(BaseCommand):
         for r in xrange(0, total, options['length']):
             print 'Syncing resources in cache [%s:%s]' % (r, r + options['length'])
 
-            resources = Resource.objects.all()[r:r + options['length']]
+            resources = Resource.objects.select_related('content_type')[r:r + options['length']]
 
             for resource in resources:
                 resource.sync_cache()

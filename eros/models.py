@@ -101,11 +101,15 @@ class Resource(models.Model):
 class LikeManager(models.Manager):
     def contribute_to_class(self, cls, name):
         signals.post_save.connect(self.post_save, sender=cls)
+        signals.post_delete.connect(self.post_delete, sender=cls)
         return super(LikeManager, self).contribute_to_class(cls, name)
 
     def post_save(self, instance, **kwargs):
         if kwargs['created']:
             instance.resource.compute()
+
+    def post_delete(self, instance, **kwargs):
+        instance.resource.compute()
 
     def get_count(self, obj, user=None, user_ip=None):
         content_type = ContentType.objects.get_for_model(obj)
@@ -147,10 +151,15 @@ def like(obj, user_ip, user):
     resource, created = Resource.objects.get_or_create(content_type=content_type, object_id=obj.pk)
 
     like, created = Like.objects.get_or_create(resource=resource,
-                                               ip_address=user_ip,
                                                user=user)
 
     if created:
-        return like
+        like.ip_address = user_ip
+        like.save()
 
     return created
+
+
+def unlike(obj, user):
+    return (Like.objects.filter(resource__content_type=ContentType.objects.get_for_model(obj),
+                                user=user).delete())

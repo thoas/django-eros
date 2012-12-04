@@ -8,7 +8,7 @@ from django.http import Http404
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 
-from eros.models import like, Resource
+from eros.models import like, Resource, unlike
 from eros.util import get_ip
 
 
@@ -77,9 +77,13 @@ class LikeView(TemplateResponseMixin, BaseLikeView):
         context = self.get_context_data(**kwargs)
 
         if request.user.is_authenticated():
-            like(self.get_object(context['object_pk']),
-                 user_ip=get_ip(request),
-                 user=request.user)
+            result = like(self.get_object(context['object_pk']),
+                          user_ip=get_ip(request),
+                          user=request.user)
+
+            if result is False:
+                unlike(self.get_object(context['object_pk']),
+                       user=request.user)
 
             context = self.get_context_data(**kwargs)
 

@@ -5,10 +5,11 @@ from django.core.exceptions import SuspiciousOperation
 from django.utils.html import escape
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import Http404
+from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 
-from eros.models import like, Resource, unlike
+from eros.models import like, Resource, unlike, Like
 from eros.util import get_ip
 
 
@@ -91,5 +92,39 @@ class LikeView(TemplateResponseMixin, BaseLikeView):
                                                                            context.get('object_pk')))
 
 
-class LikeListView(BaseLikeView):
-    pass
+class LikeListView(TemplateResponseMixin, BaseLikeView):
+    http_method_names = ['get']
+    template_name = 'eros/like_list.html'
+
+    def get_context_data(self, **kwargs):
+        ctype = self.request.GET.get('ctype', '')
+        object_pk = self.request.GET.get('object_pk', '')
+
+        if ctype is None or object_pk is None:
+            raise SuspiciousOperation('Missing content_type or object_pk field.')
+
+        self.model = self.get_model(ctype)
+
+        self.object = self.get_object(object_pk)
+
+        content_type = ContentType.objects.get_for_model(self.model)
+
+        likes = (Like.objects.filter(resource__content_type=content_type,
+                                     resource__object_id=object_pk)
+                 .select_related('user')
+                 .order_by('-created'))
+
+        return {
+            'ctype': ctype,
+            'object_pk': object_pk,
+            'object': self.object,
+            'content_type': content_type,
+            'likes': likes
+        }
+
+    def get(self, request, *args, **kwargs):
+        self.request = request
+
+        context = self.get_context_data(**kwargs)
+
+        return self.render_to_response(context)

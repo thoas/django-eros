@@ -26,4 +26,4 @@ class Command(BaseCommand):
             resources = Resource.objects.select_related('content_type')[r:r + options['length']]
 
             for resource in resources:
-                resource.sync_cache()
+                resource.sync_count()

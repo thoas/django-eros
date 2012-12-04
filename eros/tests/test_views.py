@@ -30,10 +30,10 @@ class ViewTests(TestCase):
 
         like_url = reverse('eros_like', )
 
-        querystring = '?ctype=%s&object_pk=%s&submit=1' % ('%s.%s' % (Poll._meta.app_label, self.content_type), self.poll.pk)
+        querystring = '?ctype=%s&object_pk=%s' % ('%s.%s' % (Poll._meta.app_label, self.content_type), self.poll.pk)
 
-        response = self.client.get(like_url + querystring)
+        response = self.client.post(like_url + querystring)
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
 
         self.assertEqual(Like.objects.get_count(obj=self.poll), 1)

@@ -28,6 +28,28 @@ class ResourceCacheManager(models.Manager):
     def get_count(self, ctype, object_pk):
         return cache.get(make_key(ctype, object_pk, 'count'), 0) or 0
 
+    def is_liker(self, ctype, object_pk, user):
+        cache_key = make_key(ctype, object_pk, 'users')
+
+        results = cache.get(cache_key, None)
+
+        if results is None:
+            count = self.get_count(ctype, object_pk)
+
+            results = ''
+
+            if count:
+                content_type = ContentType.objects.get_for_model(models.get_model(*ctype.split('.')))
+
+                likes = (Like.objects.filter(resource__content_type=content_type,
+                                             resource__object_id=object_pk).values_list('user'))
+
+                results = '|'.join([str(like[0]) for like in likes])
+
+            cache.set(cache_key, results)
+
+        return str(user.pk) in results
+
 
 class Resource(models.Model):
     created = models.DateTimeField(auto_now_add=True)

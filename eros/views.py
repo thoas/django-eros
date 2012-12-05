@@ -13,7 +13,7 @@ from eros.models import like, Resource, unlike, Like
 from eros.util import get_ip
 
 
-class BaseLikeView(generic.View):
+class LikeViewMixin(object):
     http_method_names = ['get', 'post']
     using = None
 
@@ -41,7 +41,7 @@ class BaseLikeView(generic.View):
         return obj
 
 
-class LikeView(TemplateResponseMixin, BaseLikeView):
+class LikeView(TemplateResponseMixin, LikeViewMixin, generic.View):
     template_name = 'eros/like.html'
 
     def get_context_data(self, **kwargs):
@@ -92,39 +92,35 @@ class LikeView(TemplateResponseMixin, BaseLikeView):
                                                                            context.get('object_pk')))
 
 
-class LikeListView(TemplateResponseMixin, BaseLikeView):
+class LikeListView(LikeViewMixin, generic.ListView):
     http_method_names = ['get']
     template_name = 'eros/like_list.html'
+    context_object_name = 'likes'
+    paginate_by = 5
 
-    def get_context_data(self, **kwargs):
-        ctype = self.request.GET.get('ctype', '')
-        object_pk = self.request.GET.get('object_pk', '')
+    def get_queryset(self):
+        self.ctype = self.request.GET.get('ctype', '')
+        self.object_pk = self.request.GET.get('object_pk', '')
 
-        if ctype is None or object_pk is None:
+        if self.ctype is None or self.object_pk is None:
             raise SuspiciousOperation('Missing content_type or object_pk field.')
 
-        self.model = self.get_model(ctype)
+        self.model = self.get_model(self.ctype)
 
-        self.object = self.get_object(object_pk)
+        self.object = self.get_object(self.object_pk)
 
-        content_type = ContentType.objects.get_for_model(self.model)
-
-        likes = (Like.objects.filter(resource__content_type=content_type,
-                                     resource__object_id=object_pk)
-                 .select_related('user')
+        likes = (Like.objects.filter(resource__content_type=ContentType.objects.get_for_model(self.model),
+                                     resource__object_id=self.object_pk)
+                 .select_related('user__profile')
                  .order_by('-created'))
 
-        return {
-            'ctype': ctype,
-            'object_pk': object_pk,
+        return likes
+
+    def get_context_data(self, **kwargs):
+        context = dict(super(LikeListView, self).get_context_data(**kwargs), **{
+            'ctype': self.ctype,
+            'object_pk': self.object_pk,
             'object': self.object,
-            'content_type': content_type,
-            'likes': likes
-        }
+        })
 
-    def get(self, request, *args, **kwargs):
-        self.request = request
-
-        context = self.get_context_data(**kwargs)
-
-        return self.render_to_response(context)
+        return context

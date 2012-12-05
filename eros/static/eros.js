@@ -39,26 +39,37 @@
             parent = _this.parent(),
             querystring = '?ctype=' + _this.data('ctype') + '&object_pk=' + _this.data('object-id');
 
-          like_url = _this.data('like-url'),
+          like_url = _this.data('like-url');
 
-          _this.replaceWith('<iframe scrolling="no" style="' + _this.attr('style') + '" src="' + like_url + querystring + '"></iframe>');
+          _this.replaceWith('<iframe scrolling="no" frameborder="no" style="' + _this.attr('style') + '" src="' + like_url + querystring + '"></iframe>');
       });
 
-      $('iframe').each(function() {
-        $(this).load(function() {
-          var iframe = $(this);
-          $(this).contents().find('a.eros-counter').click(function(e) {
+      pm.bind('counter', function(data) {
+        var url = data.url,
+            el = $('#like-list-container');
 
-            $(document.body).append('<iframe scrolling="no" style="border: none; overflow: hidden; position: absolute; z-index: 1; display: none;" src="'+ $(this).attr('href') +'" id="like-list-container"></iframe>')
+        if (!el.length || el.attr('src') != url) {
+          $(document.body).append('<iframe scrolling="no" frameborder="no" style="border: none; overflow: hidden; position: absolute; z-index: 1; display: none;" src="'+ data.url +'" id="like-list-container"></iframe>');
 
-            $('#like-list-container').load(function() {
-              $(this).height($(this).contents().find("html").height());
-              $(this).width($(this).contents().find("html").width());
+          var iframe = $('iframe[src="' + data.from_url + '"]');
 
-              $(this).offset(iframe.offset()).show();
-            });
+          $('#like-list-container').load(function() {
+            $(this).offset(iframe.offset());
           });
-        });
+        } else {
+          el.remove();
+        }
+      });
+
+      pm.bind('load', function(data) {
+        var iframe = $('#like-list-container');
+
+        iframe.width(data.width).height(data.height).show();
+
+        var offset = iframe.offset();
+        offset.top -= data.height;
+
+        iframe.offset(offset);
       });
     });
   }

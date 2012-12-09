@@ -111,7 +111,7 @@ class LikeListView(LikeViewMixin, generic.ListView):
 
         likes = (Like.objects.filter(resource__content_type=ContentType.objects.get_for_model(self.model),
                                      resource__object_id=self.object_pk)
-                 .select_related('user__profile')
+                 .select_related('user')
                  .order_by('-created'))
 
         return likes

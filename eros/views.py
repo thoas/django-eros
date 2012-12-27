@@ -96,7 +96,7 @@ class LikeView(TemplateResponseMixin, LikeViewMixin, generic.View):
             result = like(obj,
                           user_ip=get_ip(request),
                           user=request.user,
-                          owner=self.eros().get_author(obj))
+                          author=self.eros().get_author(obj))
 
             if result is False:
                 unlike(self.get_object(context['object_pk']),

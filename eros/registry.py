@@ -1,5 +1,3 @@
-from django.db import models
-
 from .base import ErosModelBase
 
 
@@ -17,6 +15,8 @@ class ErosRegistry(dict):
         del self[name]
 
     def register(self, *args, **kwargs):
+        from django.db import models
+
         eros = None
         model = None
 

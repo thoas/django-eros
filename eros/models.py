@@ -145,10 +145,10 @@ class Like(models.Model):
     objects = LikeManager()
 
 
-def like(obj, user_ip, user):
+def like(obj, user_ip, user, owner=None):
     content_type = ContentType.objects.get_for_model(obj)
 
-    resource, created = Resource.objects.get_or_create(content_type=content_type, object_id=obj.pk)
+    resource, created = Resource.objects.get_or_create(content_type=content_type, object_id=obj.pk, user=owner)
 
     like, created = Like.objects.get_or_create(resource=resource,
                                                user=user)

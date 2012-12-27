@@ -11,6 +11,7 @@ from django.shortcuts import redirect
 
 from eros.models import like, Resource, unlike, Like
 from eros.util import get_ip
+from eros.registry import registry
 
 
 class LikeViewMixin(object):
@@ -26,7 +27,17 @@ class LikeViewMixin(object):
         except AttributeError:
             raise SuspiciousOperation(
                 'The given content-type %r does not resolve to a valid model.' % escape(ctype))
+
         return model
+
+    def get_eros(self, model):
+        eros = registry.eros_for_model(model)
+
+        if not eros:
+            raise SuspiciousOperation(
+                'The given model %r does not resolve to a register eros model.' % repr(model))
+
+        return eros
 
     def get_object(self, object_pk):
         try:
@@ -53,6 +64,8 @@ class LikeView(TemplateResponseMixin, LikeViewMixin, generic.View):
 
         self.model = self.get_model(ctype)
 
+        self.eros = self.get_eros(self.model)
+
         is_liker = False
 
         if self.request.user.is_authenticated():
@@ -78,9 +91,12 @@ class LikeView(TemplateResponseMixin, LikeViewMixin, generic.View):
         context = self.get_context_data(**kwargs)
 
         if request.user.is_authenticated():
-            result = like(self.get_object(context['object_pk']),
+            obj = self.get_object(context['object_pk'])
+
+            result = like(obj,
                           user_ip=get_ip(request),
-                          user=request.user)
+                          user=request.user,
+                          owner=self.eros().get_author(obj))
 
             if result is False:
                 unlike(self.get_object(context['object_pk']),

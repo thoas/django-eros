@@ -49,7 +49,11 @@
             el = $('#like-list-container');
 
         if (!el.length || el.attr('src') != url) {
-          $(document.body).append('<iframe scrolling="no" frameborder="no" style="border: none; overflow: hidden; position: absolute; z-index: 1; display: none;" src="'+ data.url +'" id="like-list-container"></iframe>');
+          if (el.length) {
+            el.remove();
+          }
+
+          $(document.body).append('<iframe scrolling="no" frameborder="no" style="border: none; overflow: hidden; position: absolute; z-index: 1;" src="'+ data.url +'" id="like-list-container"></iframe>');
 
           var iframe = $('iframe[src="' + data.from_url + '"]');
 

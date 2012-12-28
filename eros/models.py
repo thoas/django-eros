@@ -162,4 +162,5 @@ def like(obj, user_ip, user, author=None):
 
 def unlike(obj, user):
     return (Like.objects.filter(resource__content_type=ContentType.objects.get_for_model(obj),
+                                resource__object_id=obj.pk,
                                 user=user).delete())

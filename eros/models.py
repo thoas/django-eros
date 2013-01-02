@@ -5,9 +5,11 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes import generic
 
-from django.core.cache import cache
+from django.core.cache import get_cache
 
-from eros.settings import EROS_CACHE_PREFIX
+from eros.settings import EROS_CACHE_PREFIX, EROS_CACHE_ALIAS
+
+cache = get_cache(EROS_CACHE_ALIAS)
 
 
 def make_key_from_obj(obj, suffix=None):
@@ -26,7 +28,21 @@ class ResourceManager(models.Manager):
 
 class ResourceCacheManager(models.Manager):
     def get_count(self, ctype, object_pk):
-        return cache.get(make_key(ctype, object_pk, 'count'), 0) or 0
+        cache_key = make_key(ctype, object_pk, 'count')
+
+        count = cache.get(cache_key, False) or False
+
+        if count is False:
+            try:
+                resource = self.model.objects.get(content_type=self._get_ctype(ctype), object_id=object_pk)
+            except self.model.DoesNotExist:
+                count = 0
+            else:
+                count = resource.like_count
+
+            cache.set(cache_key, count)
+
+        return count
 
     def is_liker(self, ctype, object_pk, user):
         cache_key = make_key(ctype, object_pk, 'users')
@@ -39,7 +55,7 @@ class ResourceCacheManager(models.Manager):
             results = ''
 
             if count:
-                content_type = ContentType.objects.get_for_model(models.get_model(*ctype.split('.')))
+                content_type = self._get_ctype(ctype)
 
                 likes = (Like.objects.filter(resource__content_type=content_type,
                                              resource__object_id=object_pk).values_list('user'))
@@ -49,6 +65,9 @@ class ResourceCacheManager(models.Manager):
             cache.set(cache_key, results)
 
         return str(user.pk) in results.split('|')
+
+    def _get_ctype(self, ctype):
+        return ContentType.objects.get_for_model(models.get_model(*ctype.split('.')))
 
 
 class Resource(models.Model):
@@ -148,7 +167,11 @@ class Like(models.Model):
 def like(obj, user_ip, user, author=None):
     content_type = ContentType.objects.get_for_model(obj)
 
-    resource, created = Resource.objects.get_or_create(content_type=content_type, object_id=obj.pk, user=author)
+    resource, created = Resource.objects.get_or_create(content_type=content_type, object_id=obj.pk)
+
+    if created and author:
+        resource.user = author
+        resource.save()
 
     like, created = Like.objects.get_or_create(resource=resource,
                                                user=user)

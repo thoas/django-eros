@@ -48,7 +48,7 @@ class ResourceCacheManager(models.Manager):
 
             cache.set(cache_key, results)
 
-        return str(user.pk) in results
+        return str(user.pk) in results.split('|')
 
 
 class Resource(models.Model):

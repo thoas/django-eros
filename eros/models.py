@@ -167,13 +167,17 @@ class Like(models.Model):
 def like(obj, user_ip, user, author=None):
     content_type = ContentType.objects.get_for_model(obj)
 
-    resource, created = Resource.objects.get_or_create(content_type=content_type, object_id=obj.pk)
+    resource, created = Resource.objects.get_or_create(content_type=content_type,
+                                                       object_id=obj.pk)
 
     if created and author:
+        user_id = author
+
         if isinstance(author, User):
-            resource.user_id = author.pk
-        else:
-            resource.user_id = author
+            user_id = author.pk
+
+        resource.user_id = user_id
+
         resource.save()
 
     like, created = Like.objects.get_or_create(resource=resource,

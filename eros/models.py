@@ -170,9 +170,10 @@ def like(obj, user_ip, user, author=None):
     resource, created = Resource.objects.get_or_create(content_type=content_type, object_id=obj.pk)
 
     if created and author:
-        if isinstance(author, str):
-            author = User.objects.get(id=author)
-        resource.user = author
+        if isinstance(author, User):
+            resource.user_id = author.pk
+        else:
+            resource.user_id = author
         resource.save()
 
     like, created = Like.objects.get_or_create(resource=resource,

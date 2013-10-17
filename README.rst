@@ -6,3 +6,5 @@ django-eros
     :target: http://travis-ci.org/thoas/django-eros
 
 Standalone Django application to like any content types you want and transform link.
+
+Thanks to [oleiade](https://github.com/oleiade) for this application name.

@@ -1,13 +1,14 @@
 from django.db import models
 from django.db.models import signals
-from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes import generic
 
+from .compat import User
+
 from django.core.cache import get_cache
 
-from eros.settings import EROS_CACHE_PREFIX, EROS_CACHE_ALIAS
+from .settings import EROS_CACHE_PREFIX, EROS_CACHE_ALIAS
 
 cache = get_cache(EROS_CACHE_ALIAS)
 

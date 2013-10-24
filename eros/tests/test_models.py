@@ -1,12 +1,14 @@
 from django.test import TestCase
-from django.contrib.auth.models import User
 
 from eros.models import like, Like, unlike, Resource
-from eros.tests.models import Poll
+
+from .models import Poll
 
 
 class LikeTests(TestCase):
     def setUp(self):
+        from eros.compat import User
+
         self.poll = Poll.objects.create(
             question='What is my name?'
         )

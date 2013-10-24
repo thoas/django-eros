@@ -25,9 +25,9 @@ INSTALLED_APPS = [
     'django_nose',
 ]
 
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
-
 ROOT_URLCONF = 'eros.tests.urls'
+
+TEST_RUNNER = 'discover_runner.DiscoverRunner'
 
 TEMPLATE_DIRS = (
     os.path.join(os.path.dirname(__file__), 'templates')

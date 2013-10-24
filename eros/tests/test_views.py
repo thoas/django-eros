@@ -1,14 +1,16 @@
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.models import User
 
 from eros.models import Like
-from eros.tests.models import Poll
+
+from .models import Poll
 
 
 class ViewTests(TestCase):
     def setUp(self):
+        from eros.compat import User
+
         self.poll = Poll.objects.create(
             question='What is my name?'
         )

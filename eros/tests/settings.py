@@ -22,7 +22,6 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'eros',
     'eros.tests',
-    'django_nose',
 ]
 
 ROOT_URLCONF = 'eros.tests.urls'

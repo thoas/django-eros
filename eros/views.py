@@ -9,9 +9,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 
-from eros.models import like, Resource, unlike, Like
-from eros.util import get_ip
-from eros.registry import registry
+from .models import like, Resource, unlike, Like
+from .util import get_ip
+from .registry import registry
 
 
 class LikeViewMixin(object):

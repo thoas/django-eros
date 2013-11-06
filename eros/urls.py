@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 
-from eros import views
+from . import views
 
 
 urlpatterns = patterns(

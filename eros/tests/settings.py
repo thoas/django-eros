@@ -1,4 +1,5 @@
 import os
+import django
 
 DATABASES = {
     'default': {
@@ -26,10 +27,11 @@ INSTALLED_APPS = [
 
 ROOT_URLCONF = 'eros.tests.urls'
 
-TEST_RUNNER = 'discover_runner.DiscoverRunner'
+if django.VERSION <= (1, 6):
+    TEST_RUNNER = 'discover_runner.DiscoverRunner'
 
 TEMPLATE_DIRS = (
-    os.path.join(os.path.dirname(__file__), 'templates')
+    os.path.join(os.path.dirname(__file__), 'templates'),
 )
 
 SECRET_KEY = 'blabla'
